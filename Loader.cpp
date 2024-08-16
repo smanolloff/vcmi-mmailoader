@@ -14,21 +14,11 @@
 // limitations under the License.
 // =============================================================================
 
-#include "TorchModel.h"
 #include <stdexcept>
-#ifdef ENABLE_LIBTORCH
-#include <ATen/core/enum_tag.h>
-#include <ATen/core/ivalue.h>
-#include <c10/core/SymFloat.h>
-#include <c10/core/ScalarType.h>
-#include <torch/torch.h>
-#include <torch/script.h>
-#endif
-
-#include "../../AI/MMAI/schema/schema.h"
+#include <string>
 
 #include "Loader.h"
-#include <string>
+#include "TorchModel.h"
 
 namespace MMAI {
     Schema::Baggage * LoadModels(

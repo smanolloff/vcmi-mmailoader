@@ -20,17 +20,29 @@
 #include "../../AI/MMAI/schema/schema.h"
 #include "TorchModel.h"
 
-namespace MMAI {
+#include <ATen/core/enum_tag.h>
+#include <ATen/core/ivalue.h>
+#include <c10/core/SymFloat.h>
+#include <c10/core/ScalarType.h>
+#include <torch/torch.h>
+#include <torch/script.h>
 
-#ifdef ENABLE_LIBTORCH
+namespace MMAI {
+    class TorchModel::TorchJitImpl {
+    public:
+        TorchJitImpl(std::string path) : module(torch::jit::load(path)) {
+            module.eval();
+        }
+
+        c10::InferenceMode guard;
+        torch::jit::script::Module module;
+    };
+
     TorchModel::TorchModel(std::string path, bool verbose)
     : verbose(verbose)
+    , tji(std::make_unique<TorchJitImpl>(path))
     {
-        c10::InferenceMode guard;
-        model = torch::jit::load(path);
-        model.eval();
-
-        version = model.get_method("get_version")({}).toInt();
+        version = tji->module.get_method("get_version")({}).toInt();
 
         switch(version) {
             break; case 1:
@@ -46,7 +58,7 @@ namespace MMAI {
                 throw std::runtime_error("Unknown MMAI version: " + std::to_string(version));
         }
 
-        auto out_features = model.attr("actor").toModule().attr("out_features").toInt();
+        auto out_features = tji->module.attr("actor").toModule().attr("out_features").toInt();
 
         switch(out_features) {
         break; case 2311: actionOffset = 1;
@@ -65,7 +77,6 @@ namespace MMAI {
     };
 
     int TorchModel::getAction(const MMAI::Schema::IState * s) {
-        c10::InferenceMode guard;
         auto any = s->getSupplementaryData();
         auto ended = false;
 
@@ -107,7 +118,7 @@ namespace MMAI {
         // for (int i = 0; i < mask_accessor.size(0); ++i)
         //     printf("mask[%d]=%d\n", i, mask_accessor[i]);
 
-        auto method = model.get_method("predict");
+        auto method = tji->module.get_method("predict");
         auto inputs = std::vector<torch::IValue>{obs, mask};
         auto res = method(inputs).toInt() + actionOffset;
 
@@ -115,7 +126,7 @@ namespace MMAI {
             printf("AI action prediction: %d\n", int(res));
 
             // Also esitmate value
-            auto vmethod = model.get_method("get_value");
+            auto vmethod = tji->module.get_method("get_value");
             auto vinputs = std::vector<torch::IValue>{obs};
             auto vres = vmethod(vinputs).toDouble();
             printf("AI value estimation: %f\n", vres);
@@ -125,29 +136,15 @@ namespace MMAI {
     };
 
     double TorchModel::getValue(const MMAI::Schema::IState * s) {
-        c10::InferenceMode guard;
         auto &src = s->getBattlefieldState();
         auto dst = MMAI::Schema::BattlefieldState{};
         dst.reserve(dst.size());
         std::copy(src.begin(), src.end(), dst.begin());
         auto obs = torch::from_blob(dst.data(), {11, 15, sizeOneHex}, torch::kFloat);
 
-        auto method = model.get_method("get_value");
+        auto method = tji->module.get_method("get_value");
         auto inputs = std::vector<torch::IValue>{obs};
         auto res = method(inputs).toDouble();
         return res;
     }
-#else
-    TorchModel::TorchModel(std::string path, bool verbose) {
-        throw std::runtime_error(
-            "This binary was compiled without the ENABLE_LIBTORCH flag"
-            " and cannot load \"MMAI_MODEL\" files."
-        );
-    }
-
-    std::string TorchModel::getName() { return ""; };
-    int TorchModel::getVersion() { return 0; }
-    int TorchModel::getAction(const MMAI::Schema::IState * s) { return 0; }
-    double TorchModel::getValue(const MMAI::Schema::IState * s) { return 0; }
-#endif // ENABLE_LIBTORCH
 }
