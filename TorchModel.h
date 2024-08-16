@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <mutex>
+
 #include "../AI/MMAI/schema/base.h"
 
 namespace MMAI {
