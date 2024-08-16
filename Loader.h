@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "../../AI/MMAI/schema/schema.h"
+#include "../AI/MMAI/schema/schema.h"
 
 namespace MMAI {
     Schema::Baggage* MMAI_DLL_LINKAGE LoadModels(

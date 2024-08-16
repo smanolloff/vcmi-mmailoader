@@ -17,15 +17,15 @@
 #include <memory>
 #include <stdexcept>
 
-#include "../../AI/MMAI/schema/schema.h"
-#include "TorchModel.h"
-
 #include <ATen/core/enum_tag.h>
 #include <ATen/core/ivalue.h>
 #include <c10/core/SymFloat.h>
 #include <c10/core/ScalarType.h>
 #include <torch/torch.h>
 #include <torch/script.h>
+
+#include "TorchModel.h"
+#include "../AI/MMAI/schema/schema.h"
 
 namespace MMAI {
     class TorchModel::TorchJitImpl {
@@ -118,6 +118,8 @@ namespace MMAI {
         // for (int i = 0; i < mask_accessor.size(0); ++i)
         //     printf("mask[%d]=%d\n", i, mask_accessor[i]);
 
+        std::unique_lock lock(m);
+
         auto method = tji->module.get_method("predict");
         auto inputs = std::vector<torch::IValue>{obs, mask};
         auto res = method(inputs).toInt() + actionOffset;
@@ -140,6 +142,9 @@ namespace MMAI {
         auto dst = MMAI::Schema::BattlefieldState{};
         dst.reserve(dst.size());
         std::copy(src.begin(), src.end(), dst.begin());
+
+        std::unique_lock lock(m);
+
         auto obs = torch::from_blob(dst.data(), {11, 15, sizeOneHex}, torch::kFloat);
 
         auto method = tji->module.get_method("get_value");

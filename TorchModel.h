@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "../../AI/MMAI/schema/base.h"
+#include "../AI/MMAI/schema/base.h"
 
 namespace MMAI {
     class MMAI_DLL_LINKAGE TorchModel : public MMAI::Schema::IModel {
@@ -35,6 +35,8 @@ namespace MMAI {
         int sizeOneHex;
         int nactions;
         int actionOffset;
+
+        std::mutex m;
 
         class TorchJitImpl;
         std::unique_ptr<TorchJitImpl> tji;
