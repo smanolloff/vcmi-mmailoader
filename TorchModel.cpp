@@ -39,7 +39,8 @@ namespace MMAI {
     };
 
     TorchModel::TorchModel(std::string path, bool verbose)
-    : verbose(verbose)
+    : path(path)
+    , verbose(verbose)
     , tji(std::make_unique<TorchJitImpl>(path))
     {
         version = tji->module.get_method("get_version")({}).toInt();
@@ -111,6 +112,8 @@ namespace MMAI {
 
         for (auto it = boolmask.begin() + actionOffset; it != boolmask.end(); ++it)
             intmask.push_back(static_cast<int>(*it));
+
+        intmask.at(0) = 0;  // prevent retreats for now
 
         auto mask = torch::from_blob(intmask.data(), {static_cast<long>(intmask.size())}, torch::kInt).to(torch::kBool);
 

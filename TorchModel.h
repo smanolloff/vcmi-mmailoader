@@ -28,9 +28,10 @@ namespace MMAI {
         int getAction(const MMAI::Schema::IState * s) override;
         double getValue(const MMAI::Schema::IState * s) override;
     private:
+        std::string path;
         bool verbose;
-        int version;
         std::string name;
+        int version;
 
         int sizeOneHex;
         int nactions;
