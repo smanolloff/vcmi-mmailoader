@@ -19,7 +19,7 @@
 #include "../AI/MMAI/schema/schema.h"
 
 namespace MMAI {
-    Schema::Baggage* MMAI_DLL_LINKAGE LoadModels(
+    MMAI_DLL_LINKAGE Schema::Baggage* LoadModels(
         std::string leftModelPath,
         std::string rightModelPath,
         bool verbose = false

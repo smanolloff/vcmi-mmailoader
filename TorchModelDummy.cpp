@@ -1,7 +1,7 @@
 #include <memory>
 #include <stdexcept>
 
-#include "../../AI/MMAI/schema/schema.h"
+#include "../AI/MMAI/schema/schema.h"
 #include "TorchModel.h"
 
 /*
@@ -10,6 +10,8 @@
  */
 
 namespace MMAI {
+    class TorchModel::TorchJitImpl {};
+
     TorchModel::TorchModel(std::string path, bool verbose) {
         throw std::runtime_error(
             "This binary was compiled without the ENABLE_LIBTORCH flag"
